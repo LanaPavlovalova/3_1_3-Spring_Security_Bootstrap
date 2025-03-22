@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Delete User</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+</head>
+<body>
+<div class="container mt-4">
+    <h1>Delete User</h1>
+    <p>Are you sure you want to delete the following user?</p>
+    <div class="card shadow">
+        <div class="card-body">
+            <table class="table table-bordered">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Age</th>
+                    <th>Roles</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td th:text="${user.id}"></td>
+                    <td th:text="${user.username}"></td>
+                    <td th:text="${user.email}"></td>
+                    <td th:text="${user.age}"></td>
+                    <td th:text="${user.getRolesAsString()}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <form th:action="@{/admin/delete/{id}(id=${user.id})}" method="post" class="mt-3">
+        <button type="submit" class="btn btn-danger">Confirm Delete</button>
+        <a th:href="@{/admin}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+</body>
+</html>
