@@ -1,85 +1,87 @@
 package ru.kata.spring.boot_security.demo.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.ModelAndView;
 import ru.kata.spring.boot_security.demo.entity.Role;
 import ru.kata.spring.boot_security.demo.entity.User;
-import ru.kata.spring.boot_security.demo.security.RoleService;
-import ru.kata.spring.boot_security.demo.security.UserService;
+import ru.kata.spring.boot_security.demo.service.RoleService;
+import ru.kata.spring.boot_security.demo.service.UserService;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Controller
 @RequestMapping("/admin")
 public class AdminController {
+    private final UserService userService;
+    private final RoleService roleService;
 
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private RoleService roleService;
+    public AdminController(UserService userService, RoleService roleService) {
+        this.userService = userService;
+        this.roleService = roleService;
+    }
 
     @GetMapping
-    public String adminPage(@AuthenticationPrincipal User user, Model model) {
-        List<User> users = userService.findAll();
-        model.addAttribute("users", users);
-        model.addAttribute("user", user); // Передаем текущего пользователя в модель
-        model.addAttribute("allRoles", roleService.findAll()); // Передаем список всех ролей
-        return "admin";
+    public ModelAndView adminPage(@AuthenticationPrincipal User currentUser) {
+        ModelAndView modelAndView = new ModelAndView("admin");
+        modelAndView.addObject("users", userService.findAll());
+        modelAndView.addObject("currentUser", currentUser);
+        modelAndView.addObject("allRoles", roleService.findAll());
+        modelAndView.addObject("newUser", new User());
+        return modelAndView;
     }
 
-    // 2. Отображение формы для добавления нового пользователя (Create)
-    @GetMapping("/new")
-    public String showAddUserForm(Model model) {
-        model.addAttribute("user", new User()); // Передаем новый объект User
-        model.addAttribute("roles", roleService.findAll()); // Передаем список ролей
-        return "add-user";
-    }
-
-    // 3. Обработка данных из формы и сохранение пользователя (Create)
     @PostMapping("/new")
-    public String addUser(@ModelAttribute("user") User user, RedirectAttributes redirectAttributes) {
-        userService.save(user); // Сохраняем пользователя
-        redirectAttributes.addFlashAttribute("message", "Пользователь успешно добавлен");
-        return "redirect:/admin"; // Перенаправляем на страницу админа
+    public ModelAndView addUser(@ModelAttribute("newUser") User user,
+                                @RequestParam("roles") List<Long> roleIds) {
+        Set<Role> roles = new HashSet<>();
+        for (Long id : roleIds) {
+            roles.add(roleService.findById(id));
+        }
+        user.setRoles(roles);
+        userService.save(user);
+        return new ModelAndView("redirect:/admin");
     }
 
-    // 4. Отображение формы для редактирования пользователя (Update)
-    @GetMapping("/edit/{id}")
-    public String showEditUserForm(@PathVariable Long id, Model model) {
-        User user = userService.findById(id); // Находим пользователя по ID
-        List<Role> allRoles = roleService.findAll(); // Получаем список всех ролей
-        model.addAttribute("user", user); // Передаем пользователя в модель
-        model.addAttribute("allRoles", allRoles); // Передаем список ролей в модель
-        return "edit-user"; // Возвращаем шаблон для редактирования пользователя
+    @GetMapping("/edit")
+    public ModelAndView editUserForm(@RequestParam("id") Long id) {
+        ModelAndView modelAndView = new ModelAndView("edit-user");
+        modelAndView.addObject("user", userService.findById(id));
+        modelAndView.addObject("allRoles", roleService.findAll());
+        return modelAndView;
     }
 
-    // 5. Обработка данных из формы и обновление пользователя (Update)
-    @PostMapping("/edit/{id}")
-    public String updateUser(@PathVariable Long id, @ModelAttribute("user") User user, RedirectAttributes redirectAttributes) {
-        user.setId(id); // Убедимся, что ID пользователя не меняется
+    @PostMapping("/edit")
+    public ModelAndView updateUser(@RequestParam Long id,
+                                   @ModelAttribute("user") User user,
+                                   @RequestParam("roles") List<Long> roleIds) {
+        Set<Role> roles = new HashSet<>();
+        for (Long roleId : roleIds) {
+            roles.add(roleService.findById(roleId));
+        }
+        user.setRoles(roles);
+        user.setId(id);
         userService.update(user);
-        redirectAttributes.addFlashAttribute("message", "Пользователь успешно обновлен");
-        return "redirect:/admin";
+        return new ModelAndView("redirect:/admin");
     }
 
-    // 6. Удаление пользователя (Delete)
-    @GetMapping("/delete/{id}")
-    public String showDeleteUserForm(@PathVariable Long id, Model model) {
-        User user = userService.findById(id); // Находим пользователя по ID
-        model.addAttribute("user", user); // Передаем пользователя в модель
-        return "delete-user"; // Возвращаем шаблон для подтверждения удаления
+    @GetMapping("/delete")
+    public ModelAndView deleteUserForm(@RequestParam("id") Long id) {
+        ModelAndView modelAndView = new ModelAndView("delete-user");
+        modelAndView.addObject("user", userService.findById(id));
+        return modelAndView;
     }
 
-    // 7. Обработка POST-запроса для удаления пользователя
-    @PostMapping("/delete/{id}")
-    public String deleteUser(@PathVariable Long id, RedirectAttributes redirectAttributes) {
-        userService.delete(id); // Удаляем пользователя
-        redirectAttributes.addFlashAttribute("message", "User successfully deleted");
-        return "redirect:/admin"; // Перенаправляем на страницу админа
+    @PostMapping("/delete")
+    public ModelAndView deleteUser(@RequestParam Long id) {
+        userService.delete(id);
+        return new ModelAndView("redirect:/admin");
     }
 }

@@ -18,9 +18,11 @@ public class SuccessUserHandler implements AuthenticationSuccessHandler {
     private static final Logger logger = LoggerFactory.getLogger(SuccessUserHandler.class);
 
     @Override
-    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
+    public void onAuthenticationSuccess(HttpServletRequest request,
+                                        HttpServletResponse response,
+                                        Authentication authentication) throws IOException {
         Set<String> roles = AuthorityUtils.authorityListToSet(authentication.getAuthorities());
-        logger.info("User roles: {}", roles); // Логируем роли
+        logger.info("User roles: {}", roles);
 
         if (roles.contains("ROLE_ADMIN")) {
             response.sendRedirect("/admin");

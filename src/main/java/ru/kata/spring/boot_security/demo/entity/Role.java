@@ -4,6 +4,7 @@ import org.springframework.security.core.GrantedAuthority;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -23,7 +24,7 @@ public class Role implements GrantedAuthority {
     @Column(name = "name", unique = true)
     private String name;
 
-    @ManyToMany(mappedBy = "roles")
+    @ManyToMany(mappedBy = "roles", fetch = FetchType.LAZY)
     private Set<User> users;
 
     public Role() {}
@@ -37,7 +38,6 @@ public class Role implements GrantedAuthority {
         return name;
     }
 
-    // Геттеры и сеттеры
     public Long getId() {
         return id;
     }
