@@ -10,7 +10,6 @@ import java.util.List;
 
 @Repository
 public class RoleRepositoryImpl implements RoleRepository {
-
     @PersistenceContext
     private EntityManager entityManager;
 
@@ -24,6 +23,14 @@ public class RoleRepositoryImpl implements RoleRepository {
     @Override
     public Role findById(Long id) {
         return entityManager.find(Role.class, id);
+    }
+
+    @Override
+    public Role findByName(String name) {
+        TypedQuery<Role> query = entityManager.createQuery(
+                "SELECT r FROM Role r WHERE r.name = :name", Role.class);
+        query.setParameter("name", name);
+        return query.getResultStream().findFirst().orElse(null);
     }
 
     @Override
